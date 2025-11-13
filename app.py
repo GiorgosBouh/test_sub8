@@ -1,16 +1,21 @@
 import streamlit as st
+import os # Θα χρειαστούμε αυτό για να βρούμε το αρχείο PDF
 
 # --- Διαμόρφωση Σελίδας ---
 st.set_page_config(page_title="Gym-Bot: Ανέβα Επίπεδο!", page_icon="🏆")
 
 # --- SIDEBAR: Λογότυπο & Πληροφορίες ---
 with st.sidebar:
-    logo_url = "https://raw.githubusercontent.com/GiorgosBouh/test_sub8/main/logo1.png"
-    st.image(logo_url, width=150)
+    # Υποθέτουμε ότι το logo1.png είναι στον ίδιο φάκελο
+    if os.path.exists("logo1.png"):
+        st.image("logo1.png", width=150)
+    else:
+        st.warning("Δεν βρέθηκε το logo1.png")
+        
     st.divider()
     st.caption(
-        "Αυτή η εφαρμογή αναπτύχθηκε τον Νοέμβριο του 2025 στα πλαίσια της επιμόρφωσης sub8 "
-        "από τον **Γεώργιο Μπουχουρά** bouhouras@sch.gr."
+        "Αυτή η εφαρμογή αναπτύχθηκε τον Νοέμβριο του 2025 στα πλαίσια της επιμόρφωσης "
+        "από τον **Γεώργιο Μπουχουρά**."
     )
     st.caption(
         "Μπορεί να χρησιμοποιηθεί ελεύθερα για τους σκοπούς που αναφέρονται "
@@ -34,6 +39,30 @@ if 'scores' not in st.session_state:
 # --- ΚΥΡΙΑ ΕΦΑΡΜΟΓΗ ---
 st.title("🏆 Gym-Bot: Ανέβα Επίπεδο!")
 st.write(f"Γεια, μελλοντικέ ήρωα! Είμαι ο Gym-Bot 🤖")
+
+# --- (ΝΕΑ ΠΡΟΣΘΗΚΗ: DOWNLOAD ΤΟΥ PDF) ---
+pdf_file_path = "instructions.pdf" # Το όνομα του αρχείου PDF στο GitHub repo
+
+with st.expander("❓ Έχασες το 'Φύλλο Αποστολής' σου;"):
+    st.write("Μην ανησυχείς! Μπορείς να το κατεβάσεις ξανά από εδώ για να το εκτυπώσεις.")
+    
+    try:
+        # Ανοίγουμε το τοπικό αρχείο PDF (από το repo) σε bytes
+        with open(pdf_file_path, "rb") as pdf_file:
+            PDFbyte = pdf_file.read()
+
+        st.download_button(
+            label="📥 Κατέβασε το Φύλλο Αποστολής (PDF)",
+            data=PDFbyte,
+            file_name="Fyllo_Apostolis.pdf", # Το όνομα που θα δει ο μαθητής
+            mime="application/pdf"
+        )
+    except FileNotFoundError:
+        st.error(f"ΣΦΑΛΜΑ: Δεν βρέθηκε το αρχείο '{pdf_file_path}' στο GitHub repo! (Πρέπει να το ανεβάσεις πρώτα)")
+# --- (ΤΕΛΟΣ ΝΕΑΣ ΠΡΟΣΘΗΚΗΣ) ---
+
+
+st.divider() 
 st.write("Έτοιμος να δούμε τα **Χαρακτηριστικά** σου; Φέρε το **'Φύλλο Αποστολής'** από την αυλή και πάμε!")
 
 # --- 1. ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ (C) ---
@@ -71,7 +100,7 @@ if st.button("🚀 Ανάλυση Χαρακτηριστικών!"):
         # Υπολογισμός "Score"
         pushup_score = min(int((pushups / 20.0) * 100), 100) 
         plank_score = min(int((plank / 60.0) * 100), 100)
-        sprint_score = min(int((sprints / 50.0) * 100), 100) # π.χ. 50 επαναλ. = 100%
+        sprint_score = min(int((sprints / 50.0) * 100), 100)
         st.session_state.scores = {'ΔΥΝ': pushup_score, 'ΠΥΡ': plank_score, 'ΑΝΤ': sprint_score}
         
         analysis_texts = []
