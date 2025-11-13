@@ -9,7 +9,7 @@ with st.sidebar:
     st.image(logo_url, width=150)
     st.divider()
     st.caption(
-        "Αυτή η εφαρμογή (application) αναπτύχθηκε τον Νοέμβριο του 2025 στα πλαίσια της επιμόρφωσης sub8"
+        "Αυτή η εφαρμογή (application) αναπτύχθηκε τον Νοέμβριο του 2025 στα πλαίσια της επιμόρφωσης sub8 "
         "από τον **Γεώργιο Μπουχουρά (gboucho@gym.auth.gr)**."
     )
     st.caption(
