@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- Διαμόρφωση Σελίδας ---
-st.set_page_config(page_title="Ο Γυμναστής-Bot", page_icon="🤖")
+st.set_page_config(page_title="Gym-Bot: LEVEL UP!", page_icon="🏆")
 
 # --- SIDEBAR: Λογότυπο & Πληροφορίες ---
 with st.sidebar:
@@ -9,8 +9,8 @@ with st.sidebar:
     st.image(logo_url, width=150)
     st.divider()
     st.caption(
-        "Αυτή η εφαρμογή (application) αναπτύχθηκε τον Νοέμβριο του 2025 στα πλαίσια της επιμόρφωσης sub8 "
-        "από τον **Γεώργιο Μπουχουρά (gboucho@gym.auth.gr)**."
+        "Αυτή η εφαρμογή (application) αναπτύχθηκε τον Νοέμβριο του 2025 στα πλαίσια της επιμόρφωσης "
+        "από τον **Γεώργιο Μπουχουρά**."
     )
     st.caption(
         "Μπορεί να χρησιμοποιηθεί ελεύθερα για τους σκοπούς που αναφέρονται "
@@ -19,123 +19,151 @@ with st.sidebar:
     st.caption("Άδεια Χρήσης: [Creative Commons CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)")
 
 # --- ΑΡΧΙΚΟΠΟΙΗΣΗ "ΜΝΗΜΗΣ" (Session State) ---
-# Αυτό είναι το κλειδί. Για να "θυμάται" η εφαρμογή τις ενέργειες.
 if 'analysis_done' not in st.session_state:
     st.session_state.analysis_done = False
 if 'plan_text' not in st.session_state:
     st.session_state.plan_text = ""
 if 'goal' not in st.session_state:
     st.session_state.goal = ""
+if 'analysis_output' not in st.session_state:
+    st.session_state.analysis_output = []
+if 'scores' not in st.session_state:
+    st.session_state.scores = {}
 
 
 # --- ΚΥΡΙΑ ΕΦΑΡΜΟΓΗ ---
-st.title("🤖 Ο Γυμναστής-Bot της Στ' Τάξης")
-st.write(f"Γεια! Είμαι ο ψηφιακός βοηθός Φυσικής Αγωγής.")
-st.write("Πάρε το **Φύλλο Καταγραφής** σου από την αυλή και ας ξεκινήσουμε!")
+st.title("🏆 Gym-Bot: LEVEL UP!")
+st.write(f"Γεια, future athlete! Είμαι ο Gym-Bot 🤖")
+st.write("Έτοιμος να δούμε τα stats σου; Φέρε το **'Φύλλο Αποστολής' (Mission Log)** από την αυλή και πάμε!")
 
 # --- 1. ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ (C) ---
-st.header("1. Τι έκανες στην αυλή;")
-col1, col2 = st.columns(2)
+st.header("📋 Mission 1: Upload Stats")
+
+col1, col2, col3 = st.columns(3)
 with col1:
-    pushups = st.number_input("Πόσες Κάμψεις έκανες;", min_value=0, step=1)
-    plank = st.number_input("Πόσα δευτερόλεπτα έκανες Σανίδα;", min_value=0, step=1)
-with col2:
+    pushups = st.number_input("Κάμψεις (STR);", min_value=0, step=1)
     feeling_pushups = st.selectbox(
-        "Πώς σου φάνηκαν οι Κάμψεις;",
-        ["", "Εύκολο", "Μέτριο", "Κουραστικό", "Πολύ Κουραστικό"]
+        "Difficulty (Κάμψεις);",
+        ["", "Easy Peasy", "Challenging", "Hard Mode", "Boss Level!"], key="feel_pushups"
     )
+with col2:
+    plank = st.number_input("Σανίδα (CORE) (δευτ.);", min_value=0, step=1)
     feeling_plank = st.selectbox(
-        "Πώς σου φάνηκε η Σανίδα;",
-        ["", "Εύκολο", "Μέτριο", "Κουραστικό", "Πολύ Κουραστικό"]
+        "Difficulty (Σανίδα);",
+        ["", "Easy Peasy", "Challenging", "Hard Mode", "Boss Level!"], key="feel_plank"
     )
+with col3:
+    sprints = st.number_input("Γόνατα ψηλά (STA);", min_value=0, step=1)
+    feeling_sprints = st.selectbox(
+        "Difficulty (Γόνατα);",
+        ["", "Easy Peasy", "Challenging", "Hard Mode", "Boss Level!"], key="feel_sprints"
+    )
+
 
 # --- 2. ΚΟΥΜΠΙ ΑΝΑΛΥΣΗΣ ---
-if st.button("🤖 Πάτα για Ανάλυση!"):
-    if not feeling_pushups or not feeling_plank or feeling_pushups == "" or feeling_plank == "":
-        st.warning("Παρακαλώ, συμπλήρωσε πώς σου φάνηκαν *και* οι δύο ασκήσεις!")
-        st.session_state.analysis_done = False # Κλείδωμα επόμενου βήματος
+if st.button("🚀 Analyze My Stats!"):
+    if not feeling_pushups or not feeling_plank or not feeling_sprints or "" in [feeling_pushups, feeling_plank, feeling_sprints]:
+        st.warning("Whoops! Πρέπει να συμπληρώσεις *όλα* τα stats σου για να συνεχίσεις!")
+        st.session_state.analysis_done = False
     else:
-        # Αποθηκεύουμε στη "μνήμη" ότι η ανάλυση έγινε
         st.session_state.analysis_done = True
         
-        # Δημιουργούμε το κείμενο ανάλυσης και το αποθηκεύουμε
-        analysis_texts = []
-        if feeling_pushups == "Πολύ Κουραστικό" or pushups < 10:
-            analysis_texts.append("💪 **Κάμψεις:** Καλή προσπάθεια! Αυτή η άσκηση χτίζει **Μυϊκή Δύναμη** στα χέρια και το στήθος. Φαίνεται ότι αυτός ο τομέας ήταν μια πρόκληση. Είναι τέλειο σημείο για να ξεκινήσεις τη βελτίωσή σου!")
-        else:
-            analysis_texts.append("💪 **Κάμψεις:** Εξαιρετική δουλειά! Η δύναμή σου είναι σε πολύ καλό επίπεδο.")
-
-        if feeling_plank == "Πολύ Κουραστικό" or plank < 20:
-            analysis_texts.append("🧘 **Σανίδα:** Η σανίδα είναι ζόρικη! Δουλεύει τον 'πυρήνα' (κοιλιά/ράχη). Είναι σημαντικός για τη στάση του σώματός σου. Αξίζει να τον δυναμώσουμε!")
-        else:
-            analysis_texts.append("🧘 **Σανίδα:** Πολύ καλά! Ο πυρήνας σου είναι δυνατός!")
+        # Υπολογισμός "Score"
+        pushup_score = min(int((pushups / 20.0) * 100), 100) 
+        plank_score = min(int((plank / 60.0) * 100), 100)
+        sprint_score = min(int((sprints / 50.0) * 100), 100) # π.χ. 50 επαναλ. = 100%
+        st.session_state.scores = {'STR': pushup_score, 'CORE': plank_score, 'STA': sprint_score}
         
-        # Αποθηκεύουμε τα πάντα στο session_state
+        analysis_texts = []
+        if "Hard Mode" in feeling_pushups or "Boss Level" in feeling_pushups or pushups < 10:
+            analysis_texts.append(("info", "💪 **STR (Strength):** Καλή προσπάθεια! Οι κάμψεις ήταν πρόκληση. Αυτό είναι το skill που θα 'farm-άρεις' (βελτιώσεις)!"))
+        else:
+            analysis_texts.append(("success", "💪 **STR (Strength):** Nice! Έχεις ήδη καλό skill στη Δύναμη."))
+
+        if "Hard Mode" in feeling_plank or "Boss Level" in feeling_plank or plank < 20:
+            analysis_texts.append(("info", "🧘 **CORE (Πυρήνας):** Η σανίδα ήταν 'Boss Level'! Ο πυρήνας (κοιλιά/ράχη) είναι η βάση σου. Χρειάζεται training!"))
+        else:
+            analysis_texts.append(("success", "🧘 **CORE (Πυρήνας):** Solid! Ο πυρήνας σου είναι 'tank'!"))
+
+        if "Hard Mode" in feeling_sprints or "Boss Level" in feeling_sprints or sprints < 40:
+            analysis_texts.append(("info", "⚡ **STA (Stamina):** Λαχάνιασες; Η αντοχή (Stamina) είναι κλειδί για το παιχνίδι. Καλός στόχος για 'grinding' (εξάσκηση)!"))
+        else:
+            analysis_texts.append(("success", "⚡ **STA (Stamina):** Τρέχεις σαν τον άνεμο! Εξαιρετική αντοχή."))
+        
         st.session_state.analysis_output = analysis_texts
-        st.session_state.goal = "" # Καθαρίζουμε τον παλιό στόχο
-        st.session_state.plan_text = "" # Καθαρίζουμε το παλιό πλάνο
+        st.session_state.goal = ""
+        st.session_state.plan_text = ""
 
-
-# --- 3. ΕΜΦΑΝΙΣΗ ΑΝΑΛΥΣΗΣ ΚΑΙ ΣΤΟΧΩΝ (ΑΝ ΕΧΕΙ ΠΑΤΗΘΕΙ ΤΟ ΚΟΥΜΠΙ) ---
+# --- 3. ΕΜΦΑΝΙΣΗ ΑΝΑΛΥΣΗΣ ΚΑΙ ΣΤΟΧΩΝ ---
 if st.session_state.analysis_done:
-    st.header("2. Η Ανάλυσή μου:")
-    for text in st.session_state.analysis_output:
-        if "Καλή προσπάθεια" in text or "ζόρικη" in text:
+    st.header("📊 Your Stats Debrief")
+    
+    st.write("Skill Δύναμης (STR):")
+    st.progress(st.session_state.scores.get('STR', 0))
+    st.write("Skill Πυρήνα (CORE):")
+    st.progress(st.session_state.scores.get('CORE', 0))
+    st.write("Skill Αντοχής (STA):")
+    st.progress(st.session_state.scores.get('STA', 0))
+    
+    for msg_type, text in st.session_state.analysis_output:
+        if msg_type == "info":
             st.info(text)
         else:
             st.success(text)
 
-    st.header("3. Ο Επόμενος Στόχος σου")
-    st.write("Με βάση τα παραπάνω, τι θα ήθελες να πετύχεις την επόμενη φορά;")
+    st.header("🎯 Mission 2: Set Your Quest")
+    st.write("Τώρα που είδες τα stats, γράψε τη νέα σου αποστολή (Quest)!")
     
-    # Το πεδίο κειμένου για τον στόχο
-    goal_input = st.text_area("Γράψε τον στόχο σου (π.χ. 'Θέλω να κάνω 3 κάμψεις παραπάνω')", key="goal_text_area")
+    goal_input = st.text_area("Γράψε το Quest σου (π.χ. 'Level up στις κάμψεις, να κάνω 3 παραπάνω')", key="goal_text_area")
 
-    # ΤΟ ΝΕΟ ΚΟΥΜΠΙ "APPLY" ΠΟΥ ΖΗΤΗΣΑΤΕ
-    if st.button("💾 Αποθήκευσε τον Στόχο μου"):
+    if st.button("📜 Lock-in Quest!"):
         if not goal_input:
-            st.warning("Πρέπει να γράψεις έναν στόχο πρώτα!")
-            st.session_state.plan_text = "" # Σβήνουμε το παλιό πλάνο αν υπάρχει
+            st.warning("Πρέπει να γράψεις το Quest σου πρώτα!")
+            st.session_state.plan_text = ""
         else:
-            st.session_state.goal = goal_input # Αποθηκεύουμε τον στόχο στη μνήμη
+            st.session_state.goal = goal_input
             st.balloons()
-            st.success(f"Τέλειος ο στόχος σου: '{st.session_state.goal}'. Καταγράφηκε!")
+            st.success(f"Quest Acquired: '{st.session_state.goal}'! Λαμβάνεις το Training Scroll σου!")
             
-            # Το Bot δημιουργεί το πλάνο με βάση τον στόχο
-            st.subheader("🤖 Το Προσωπικό σου Μίνι-Πλάνο!")
+            plan_text = f"## 📜 Training Scroll 📜\n\n"
+            plan_text += f"**Quest:** {st.session_state.goal}\n\n"
             
-            plan_text = f"Ο Στόχος μου: {st.session_state.goal}\n\n"
-            
+            # Δημιουργία πλάνου
             if "κάμψεις" in st.session_state.goal.lower() or "pushups" in st.session_state.goal.lower():
-                plan_text += (
-                    "Για να το πετύχεις, προτείνω:\n"
-                    "1. **3 φορές την εβδομάδα** (π.χ. Δευτέρα-Τετάρτη-Παρασκευή).\n"
-                    "2. Κάνε **3 σετ** κάμψεις (μπορείς να βάζεις τα γόνατα κάτω αν κουράζεσαι).\n"
-                    "3. Κάνε όσες επαναλήψεις μπορείς σε κάθε σετ. Προσπάθησε την επόμενη φορά να κάνεις +1!"
-                )
+                plan_text += "Για να πετύχεις αυτό το Quest, προτείνω αυτό το **Training Plan**:\n"
+                plan_text += "1. 🗓️ **Συχνότητα:** 3 φορές την εβδομάδα.\n"
+                plan_text += "2. 🏋️ **Sets:** 3 σετ κάμψεις (μπορείς να βάζεις τα γόνατα κάτω αν κουράζεσαι).\n"
+                plan_text += "3. 📈 **Reps (Επαναλήψεις):** Σε κάθε σετ, κάνε όσες μπορείς! Προσπάθησε την επόμενη φορά να κάνεις +1!"
+                
             elif "σανίδα" in st.session_state.goal.lower() or "plank" in st.session_state.goal.lower():
-                plan_text += (
-                    "Για να το πετύχεις, προτείνω:\n"
-                    "1. **4 φορές την εβδομάδα** (ακόμα και για 1 λεπτό την ημέρα).\n"
-                    "2. Κάνε **3 σετ** σανίδα.\n"
-                    "3. Προσπάθησε να κρατήσεις 5 δευτερόλεπτα παραπάνω σε κάθε σετ!"
-                )
+                plan_text += "Για να πετύχεις αυτό το Quest, προτείνω αυτό το **Training Plan**:\n"
+                plan_text += "1. 🗓️ **Συχνότητα:** 4 φορές την εβδομάδα.\n"
+                plan_text += "2. 🏋️ **Sets:** 3 σετ σανίδα.\n"
+                plan_text += "3. 📈 **Reps (Χρόνος):** Προσπάθησε να κρατήσεις 5 δευτερόλεπτα παραπάνω σε κάθε σετ!"
+            
+            elif "αντοχή" in st.session_state.goal.lower() or "τρέξιμο" in st.session_state.goal.lower() or "γόνατα" in st.session_state.goal.lower():
+                plan_text += "Για να πετύχεις αυτό το Quest (STA), προτείνω αυτό το **Training Plan**:\n"
+                plan_text += "1. 🗓️ **Συχνότητα:** 3-4 φορές την εβδομάδα.\n"
+                plan_text += "2. 🏋️ **Sets:** 4 σετ 'Επιτόπιο τρέξιμο' για 1 λεπτό το καθένα.\n"
+                plan_text += "3. 📈 **Bonus:** Παίξε κυνηγητό ή μπάσκετ στο διάλειμμα. Αυτό είναι το καλύτερο 'grinding' για Stamina!"
+
             else:
-                plan_text += (
-                    "Αυτός είναι ένας πολύ γενικός στόχος. Για να τον πετύχεις, θυμήσου:\n"
-                    "1. **Συνέπεια:** Κάνε κάτι κάθε μέρα (π.χ. 10 λεπτά άσκηση).\n"
-                    "2. **Ένταση:** Πρέπει να λαχανιάζεις λιγάκι!\n"
-                    "3. **Καλή διατροφή:** Μην ξεχνάς τα φρούτα σου!"
-                )
+                plan_text += "Αυτό είναι ένα Epic Quest! Για να το πετύχεις, θυμήσου τον χρυσό κανόνα:\n"
+                plan_text += "1. 🗓️ **Συνέπεια:** Κάνε κάτι κάθε μέρα (π.χ. 10 λεπτά άσκηση).\n"
+                plan_text += "2. 🔥 **Ένταση:** Πρέπει να λαχανιάζεις λιγάκι (να νιώθεις το 'burn'!).\n"
+                plan_text += "3. 🍎 **Καλή διατροφή:** Μην ξεχνάς τα 'health potions' (φρούτα/νερό)!"
             
-            st.session_state.plan_text = plan_text # Αποθηκεύουμε το πλάνο στη μνήμη
+            st.session_state.plan_text = plan_text
             
-    # Αν υπάρχει ήδη πλάνο στη μνήμη, το δείχνουμε (για να μην εξαφανίζεται)
+    # Εμφάνιση του πλάνου (αν υπάρχει στη μνήμη)
     if st.session_state.plan_text:
-        st.subheader("🤖 Το Προσωπικό σου Μίνι-Πλάνο!")
-        st.markdown(st.session_state.plan_text)
+        st.markdown(st.session_state.plan_text, unsafe_allow_html=True)
         st.download_button(
-            label="📥 Κατέβασε το Πλάνο μου",
+            label="📥 Download Your Quest!",
             data=st.session_state.plan_text,
-            file_name=f"Το_Πλανο_Μου.txt"
+            file_name=f"My_Quest.txt"
         )
+        
+        st.divider()
+        st.header("✨ BONUS: To 'How-To' σου")
+        st.write("Τώρα που έχεις το Quest, πήγαινε στο Google Doc / Padlet που σου έδωσε ο δάσκαλος και γράψε το 'Pro-Tip' σου από την ώρα της αυλής!")
