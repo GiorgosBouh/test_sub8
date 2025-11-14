@@ -228,4 +228,6 @@ if st.session_state.analysis_done:
         st.divider()
         st.header("✨ ΜΠΟΝΟΥΣ: Η 'Χρυσή Συμβουλή' σου")
         st.write("Θυμήσου τη συμβουλή που σου έδωσε ο φίλος σου στην αυλή (Μέρος 2 του Φύλλου).")
-        st.write("Πήγαινε στο Google Doc / Padlet που σου έδωσε ο δάσκαλος και γράψε την!")
+        # --- Η ΑΛΛΑΓΗ ΕΙΝΑΙ ΕΔΩ ---
+        st.write("Πήγαινε στον ψηφιακό τοίχο της τάξης μας (Padlet) και γράψε την!")
+        st.markdown("[➡️ Πάτα εδώ για τον Τοίχο (Padlet)](https://padlet.com/gb836188_/gym-bot-eowpms64kq0tyd6t)")
